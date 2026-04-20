@@ -1,40 +1,43 @@
+# SuitMe Python / FastAPI 迁移工程
 
-# SuitMe Python / FastAPI 迁移骨架
-
-这个压缩包是给 **本地 Codex / Claude Code 继续开发** 用的基础工程。
+这个压缩包是给 **本地 Codex / Claude Code 继续开发** 用的迁移工程底座。
 
 它已经把：
 
 - FastAPI 应用入口
-- 通用响应结构
-- JWT / 密码哈希基础设施
+- 通用响应结构（`AjaxResult` / `TableDataInfo` / MyBatis-Plus 分页）
+- JWT / BCrypt 密码哈希基础设施
 - Alembic 骨架
-- **81 条兼容路由骨架**
-- 路由清单
-- 模块化 PRD
-- 架构设计
-- 风险说明
+- **81 条兼容路由**
+- 路由清单与测试
+- 模块化 PRD / 架构设计 / 风险说明
 - 数据库 schema 导出脚本
 
-先全部准备好了。
+都准备好了。
 
 ## 当前状态
 
-这是一个**可继续开发的基础框架**，不是完整迁移成品。
+这已经不是“只有路由的纯骨架”，而是一个**可启动、可继续补细节**的迁移工程。
 
 已完成：
 
 - 应用可以启动。
 - `/swagger-ui.html` 与 `/v3/api-docs` 已就位。
-- `/captchaImage` 和 `/logout` 已按兼容思路提供最小实现。
-- 其余接口已建立路由与服务层骨架，便于继续补业务。
+- `/captchaImage` 与 `/logout` 已按兼容思路提供实现。
+- `/login`、`/register`、`/getInfo` 已补上可直接连 MySQL 的基础实现。
+- `/common/upload`、`/common/uploads`、`/common/download`、`/common/download/resource` 已补上本地磁盘实现。
+- `/profile/**` 静态资源挂载已就位。
+- AI 测试接口已补成到外部 Python 生图服务的最小透传。
+- SUITME 业务主链路已经补上：顾客、搭配、搭配标签、穿搭任务、主数据、分类树、OSS。
+- 系统管理核心已经补上：用户、角色、菜单、个人资料、分角色、分菜单、Excel 导出。
+- 当前自带 smoke tests 通过：`5 passed`。
 
-未完成：
+仍需继续补齐：
 
-- 所有 Java 业务逻辑的完整迁移。
-- 真实数据库全量 ORM 对齐。
-- 新数据库最终 DDL。
-- 完整契约测试快照。
+- 与真实现网库字段逐字段核对后的 ORM 完整映射。
+- 某些复杂 Java 业务边角逻辑的逐行对齐。
+- 新数据库最终 DDL / Alembic 正式迁移链。
+- 更完整的契约快照测试与前端联调。
 
 ## 本地启动
 
@@ -42,6 +45,12 @@
 cp .env.example .env
 uv sync
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+## 运行测试
+
+```bash
+uv run pytest -q
 ```
 
 ## 推荐第一步
@@ -52,7 +61,7 @@ uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 uv run python scripts/inspect_db.py
 ```
 
-然后再根据导出的 `docs/references/schema_snapshot.json` 补齐 ORM。
+然后再根据导出的 `docs/references/schema_snapshot.json` 补齐 ORM 与 SQL 细节。
 
 ## 重要入口
 
@@ -60,3 +69,4 @@ uv run python scripts/inspect_db.py
 - 路由清单：`docs/route_inventory.json`
 - 原始 PRD：`docs/references/01-原始PRD.md`
 - 开发代理说明：`AGENTS.md`
+- 本轮更新说明：`docs/notes/05-本轮更新说明.md`

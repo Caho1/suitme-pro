@@ -423,11 +423,11 @@
     "module": "common",
     "service": "common_service",
     "handler": "uploads",
-    "method": "GET",
+    "method": "POST",
     "path": "/common/uploads",
     "auth": "login",
-    "java_source": "CommonController.serveFile",
-    "note": "访问本地上传资源。"
+    "java_source": "CommonController.uploadFiles",
+    "note": "本地多文件上传接口。"
   },
   {
     "module": "common",

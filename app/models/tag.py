@@ -3,8 +3,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import BigInteger, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from app.core.sqlalchemy_compat import BigInteger, Integer, String, Mapped, mapped_column
 
 from app.models.base import AuditMixin, Base, SoftDeleteMixin
 

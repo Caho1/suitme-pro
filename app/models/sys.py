@@ -1,21 +1,16 @@
-
 """系统管理相关 ORM。"""
 
 from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from app.core.sqlalchemy_compat import BigInteger, DateTime, Integer, String, Mapped, mapped_column
 
-from app.models.base import AuditMixin, Base
+from app.models.base import AuditMixin, Base, SoftDeleteMixin
 
 
-class SysUser(Base, AuditMixin):
-    """系统用户表。
-
-    这里只根据公开 SQL 与若依标准结构放入常用字段，后续请再与真实数据库核对。
-    """
+class SysUser(Base, AuditMixin, SoftDeleteMixin):
+    """系统用户表。"""
 
     __tablename__ = 'sys_user'
 
@@ -23,18 +18,20 @@ class SysUser(Base, AuditMixin):
     dept_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     user_name: Mapped[str] = mapped_column(String(30), nullable=False)
     nick_name: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    user_type: Mapped[str | None] = mapped_column(String(2), nullable=True)
     email: Mapped[str | None] = mapped_column(String(50), nullable=True)
     phonenumber: Mapped[str | None] = mapped_column(String(11), nullable=True)
     sex: Mapped[str | None] = mapped_column(String(1), nullable=True)
-    avatar: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    avatar: Mapped[str | None] = mapped_column(String(255), nullable=True)
     password: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    status: Mapped[str | None] = mapped_column(String(1), nullable=True)
+    status: Mapped[str | None] = mapped_column(String(1), nullable=True, default='0')
     login_ip: Mapped[str | None] = mapped_column(String(128), nullable=True)
     login_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    pwd_update_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     remark: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
-class SysRole(Base, AuditMixin):
+class SysRole(Base, AuditMixin, SoftDeleteMixin):
     """系统角色表。"""
 
     __tablename__ = 'sys_role'
@@ -44,14 +41,13 @@ class SysRole(Base, AuditMixin):
     role_key: Mapped[str] = mapped_column(String(100), nullable=False)
     role_sort: Mapped[int | None] = mapped_column(Integer, nullable=True)
     data_scope: Mapped[str | None] = mapped_column(String(1), nullable=True)
-    menu_check_strictly: Mapped[bool | None] = mapped_column(Integer, nullable=True)
-    dept_check_strictly: Mapped[bool | None] = mapped_column(Integer, nullable=True)
-    status: Mapped[str | None] = mapped_column(String(1), nullable=True)
-    del_flag: Mapped[str | None] = mapped_column(String(1), nullable=True)
+    menu_check_strictly: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    dept_check_strictly: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    status: Mapped[str | None] = mapped_column(String(1), nullable=True, default='0')
     remark: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
 
-class SysMenu(Base, AuditMixin):
+class SysMenu(Base, AuditMixin, SoftDeleteMixin):
     """系统菜单表。"""
 
     __tablename__ = 'sys_menu'

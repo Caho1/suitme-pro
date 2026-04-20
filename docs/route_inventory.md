@@ -46,7 +46,7 @@
 | 40 | category | POST | `/md/categoryTag/list` | login | 服装分类树。 |
 | 41 | common | GET | `/common/download` | login | 通用下载接口。 |
 | 42 | common | POST | `/common/upload` | login | 本地磁盘上传接口。 |
-| 43 | common | GET | `/common/uploads` | login | 访问本地上传资源。 |
+| 43 | common | POST | `/common/uploads` | login | 本地多文件上传接口。 |
 | 44 | common | GET | `/common/download/resource` | login | 下载本地资源文件。 |
 | 45 | oss_file | POST | `/oss/file/upload` | login | 上传单个文件到 OSS。 |
 | 46 | oss_file | POST | `/oss/file/batchUpload` | login | 批量上传文件到 OSS。 |

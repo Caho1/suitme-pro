@@ -5,28 +5,45 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import Request
+import httpx
 
+from app.core.response import error, success
 from app.services.ai_client import AiClient
 from app.services.base import SkeletonService
 
 
 class AiTestService(SkeletonService):
-    """测试外部 AI 服务连通性。
-
-    这里先保留接口形状，真实实现时可以决定是否完全透传 Java 的行为。
-    """
+    """测试外部 AI 服务连通性。"""
 
     def __init__(self) -> None:
         self.ai_client = AiClient()
 
     async def generate_digital_image(self, request: Request | None = None, **kwargs: Any) -> dict[str, Any]:
         """测试数字形象接口。"""
-        return await self.todo('api_test.generateDigitalImage', request=request, **kwargs)
+        if request is None:
+            return error(msg='请求对象不能为空')
+        payload = await request.json()
+        try:
+            data = await self.ai_client.generate_digital_image(payload=payload)
+            return success(data=data)
+        except httpx.HTTPError as exc:
+            return error(msg=f'外部 AI 服务调用失败: {exc}')
 
     async def generate_outfit_img(self, request: Request | None = None, **kwargs: Any) -> dict[str, Any]:
         """测试穿搭生图接口。"""
-        return await self.todo('api_test.generateOutfitImg', request=request, **kwargs)
+        if request is None:
+            return error(msg='请求对象不能为空')
+        payload = await request.json()
+        try:
+            data = await self.ai_client.generate_outfit_image(payload=payload)
+            return success(data=data)
+        except httpx.HTTPError as exc:
+            return error(msg=f'外部 AI 服务调用失败: {exc}')
 
     async def get_task_status(self, taskId: str, **kwargs: Any) -> dict[str, Any]:
         """测试任务查询接口。"""
-        return await self.todo('api_test.getTaskStatus', taskId=taskId, **kwargs)
+        try:
+            data = await self.ai_client.get_task_status(task_id=taskId)
+            return success(data=data)
+        except httpx.HTTPError as exc:
+            return error(msg=f'外部 AI 服务调用失败: {exc}')
