@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
@@ -24,6 +25,16 @@ def create_app() -> FastAPI:
         openapi_url='/v3/api-docs',
         redoc_url='/redoc',
     )
+
+    # 配置 CORS 跨域
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.mount(
         settings.upload_base_uri,
         StaticFiles(directory=str(settings.upload_profile_path)),
