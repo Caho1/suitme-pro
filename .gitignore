@@ -1,0 +1,13 @@
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+.env
+*.pyc
+*.pyo
+*.pyd
+dist/
+build/
+.DS_Store
+docs/generated/
+uploads/

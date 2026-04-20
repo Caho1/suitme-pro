@@ -1,0 +1,42 @@
+[project]
+name = "suitme-python"
+version = "0.1.0"
+description = "SuitMe Java -> FastAPI 迁移骨架"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.34.0",
+  "sqlalchemy>=2.0.36",
+  "pymysql>=1.1.1",
+  "alembic>=1.14.0",
+  "pydantic>=2.10.0",
+  "pydantic-settings>=2.7.0",
+  "python-jose[cryptography]>=3.3.0",
+  "passlib[bcrypt]>=1.7.4",
+  "loguru>=0.7.2",
+  "httpx>=0.28.0",
+  "oss2>=2.19.1",
+  "openpyxl>=3.1.5",
+  "python-multipart>=0.0.19",
+  "pyyaml>=6.0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.4",
+  "pytest-asyncio>=0.24.0",
+  "ruff>=0.8.4",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

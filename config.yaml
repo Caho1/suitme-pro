@@ -1,0 +1,24 @@
+app:
+  debug: true
+  enable_docs: true
+  docs_url: /swagger-ui.html
+  redoc_url: /redoc
+  openapi_url: /v3/api-docs
+
+response:
+  success_msg: 操作成功
+  query_msg: 查询成功
+  not_implemented_msg: 当前接口骨架已创建，业务逻辑待迁移
+
+serialization:
+  datetime_format: "%Y-%m-%d %H:%M:%S"
+  timezone: Asia/Shanghai
+
+cors:
+  allow_origins:
+    - "*"
+  allow_methods:
+    - "*"
+  allow_headers:
+    - "*"
+  allow_credentials: true

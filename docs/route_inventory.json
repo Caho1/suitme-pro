@@ -1,0 +1,812 @@
+[
+  {
+    "module": "auth",
+    "service": "auth_service",
+    "handler": "login",
+    "method": "POST",
+    "path": "/login",
+    "auth": "anonymous",
+    "java_source": "SysLoginController.login",
+    "note": "登录；返回 {code,msg,token}。"
+  },
+  {
+    "module": "auth",
+    "service": "auth_service",
+    "handler": "register",
+    "method": "POST",
+    "path": "/register",
+    "auth": "anonymous",
+    "java_source": "SysRegisterController.register",
+    "note": "注册；成功后初始化默认服装分类。"
+  },
+  {
+    "module": "auth",
+    "service": "auth_service",
+    "handler": "captcha_image",
+    "method": "GET",
+    "path": "/captchaImage",
+    "auth": "anonymous",
+    "java_source": "CaptchaController.getCode",
+    "note": "兼容端点；当前规划固定返回 captchaEnabled=false。"
+  },
+  {
+    "module": "auth",
+    "service": "auth_service",
+    "handler": "get_info",
+    "method": "GET",
+    "path": "/getInfo",
+    "auth": "login",
+    "java_source": "SysLoginController.getInfo",
+    "note": "返回 user/roles/permissions 等。"
+  },
+  {
+    "module": "auth",
+    "service": "auth_service",
+    "handler": "logout",
+    "method": "POST",
+    "path": "/logout",
+    "auth": "login",
+    "java_source": "SecurityConfig.logoutSuccessHandler",
+    "note": "建议保留兼容端点；纯 JWT 模式下可直接返回成功。"
+  },
+  {
+    "module": "ai_test",
+    "service": "ai_test_service",
+    "handler": "generate_digital_image",
+    "method": "POST",
+    "path": "/api/test/generateDigitalImage",
+    "auth": "anonymous",
+    "java_source": "ApiTestController.generateDigitalImage",
+    "note": "匿名测试外部数字形象接口。"
+  },
+  {
+    "module": "ai_test",
+    "service": "ai_test_service",
+    "handler": "generate_outfit_img",
+    "method": "POST",
+    "path": "/api/test/generateOutfitImg",
+    "auth": "anonymous",
+    "java_source": "ApiTestController.generateOutfitImg",
+    "note": "匿名测试外部穿搭生图接口。"
+  },
+  {
+    "module": "ai_test",
+    "service": "ai_test_service",
+    "handler": "get_task_status",
+    "method": "GET",
+    "path": "/api/test/getTaskStatus/{taskId}",
+    "auth": "anonymous",
+    "java_source": "ApiTestController.getTaskStatus",
+    "note": "匿名测试外部任务查询接口。"
+  },
+  {
+    "module": "customer",
+    "service": "customer_service",
+    "handler": "add",
+    "method": "POST",
+    "path": "/customer/add",
+    "auth": "login",
+    "java_source": "CustomerController.add",
+    "note": "新增顾客并发起数字形象任务。"
+  },
+  {
+    "module": "customer",
+    "service": "customer_service",
+    "handler": "get",
+    "method": "GET",
+    "path": "/customer/get",
+    "auth": "login",
+    "java_source": "CustomerController.get",
+    "note": "查询顾客详情。"
+  },
+  {
+    "module": "customer",
+    "service": "customer_service",
+    "handler": "get_digital_img",
+    "method": "GET",
+    "path": "/customer/getDigitalImg",
+    "auth": "login",
+    "java_source": "CustomerController.getDigitalImg",
+    "note": "查询顾客数字形象，必要时主动轮询外部任务。"
+  },
+  {
+    "module": "customer",
+    "service": "customer_service",
+    "handler": "page",
+    "method": "POST",
+    "path": "/customer/page",
+    "auth": "login",
+    "java_source": "CustomerController.page",
+    "note": "MyBatis-Plus 风格分页。"
+  },
+  {
+    "module": "customer",
+    "service": "customer_service",
+    "handler": "delete",
+    "method": "POST",
+    "path": "/customer/delete",
+    "auth": "login",
+    "java_source": "CustomerController.delete",
+    "note": "逻辑删除顾客。"
+  },
+  {
+    "module": "customer",
+    "service": "customer_service",
+    "handler": "update",
+    "method": "POST",
+    "path": "/customer/update",
+    "auth": "login",
+    "java_source": "CustomerController.update",
+    "note": "局部更新顾客。"
+  },
+  {
+    "module": "matching",
+    "service": "matching_service",
+    "handler": "add_or_update",
+    "method": "POST",
+    "path": "/matching/addOrUpdate",
+    "auth": "login",
+    "java_source": "MatchingController.addOrUpdate",
+    "note": "新增或修改搭配。"
+  },
+  {
+    "module": "matching",
+    "service": "matching_service",
+    "handler": "list",
+    "method": "POST",
+    "path": "/matching/list",
+    "auth": "login",
+    "java_source": "MatchingController.list",
+    "note": "查询搭配列表。"
+  },
+  {
+    "module": "matching",
+    "service": "matching_service",
+    "handler": "delete",
+    "method": "POST",
+    "path": "/matching/delete",
+    "auth": "login",
+    "java_source": "MatchingController.delete",
+    "note": "删除搭配。"
+  },
+  {
+    "module": "matching",
+    "service": "matching_service",
+    "handler": "tag_add_or_update",
+    "method": "POST",
+    "path": "/matching/tag/addOrUpdate",
+    "auth": "login",
+    "java_source": "MatchingTagController.addOrUpdate",
+    "note": "新增或修改搭配标签。"
+  },
+  {
+    "module": "matching",
+    "service": "matching_service",
+    "handler": "tag_list",
+    "method": "POST",
+    "path": "/matching/tag/list",
+    "auth": "login",
+    "java_source": "MatchingTagController.list",
+    "note": "查询搭配标签列表。"
+  },
+  {
+    "module": "matching",
+    "service": "matching_service",
+    "handler": "tag_delete",
+    "method": "POST",
+    "path": "/matching/tag/delete",
+    "auth": "login",
+    "java_source": "MatchingTagController.delete",
+    "note": "删除搭配标签。"
+  },
+  {
+    "module": "outfit",
+    "service": "outfit_service",
+    "handler": "generate_outfit_img",
+    "method": "POST",
+    "path": "/outfit/generateOutfitImg",
+    "auth": "login",
+    "java_source": "OutfitController.generateOutfitImg",
+    "note": "创建穿搭生图任务。"
+  },
+  {
+    "module": "outfit",
+    "service": "outfit_service",
+    "handler": "get_outfit_img",
+    "method": "POST",
+    "path": "/outfit/getOutfitImg",
+    "auth": "login",
+    "java_source": "OutfitController.getOutfitImg",
+    "note": "聚合获取穿搭图，并必要时更新任务状态。"
+  },
+  {
+    "module": "outfit",
+    "service": "outfit_service",
+    "handler": "get_task_status",
+    "method": "GET",
+    "path": "/outfit/getTaskStatus/{taskId}",
+    "auth": "login",
+    "java_source": "OutfitController.getTaskStatus",
+    "note": "透传外部任务查询。"
+  },
+  {
+    "module": "outfit",
+    "service": "outfit_service",
+    "handler": "task_page",
+    "method": "POST",
+    "path": "/outfit/taskPage",
+    "auth": "login",
+    "java_source": "OutfitController.taskPage",
+    "note": "穿搭任务分页。"
+  },
+  {
+    "module": "product",
+    "service": "product_service",
+    "handler": "add",
+    "method": "POST",
+    "path": "/md/product/add",
+    "auth": "login",
+    "java_source": "ProductController.add",
+    "note": "新增单品。"
+  },
+  {
+    "module": "product",
+    "service": "product_service",
+    "handler": "update",
+    "method": "POST",
+    "path": "/md/product/update",
+    "auth": "login",
+    "java_source": "ProductController.update",
+    "note": "更新单品。"
+  },
+  {
+    "module": "product",
+    "service": "product_service",
+    "handler": "delete",
+    "method": "POST",
+    "path": "/md/product/delete",
+    "auth": "login",
+    "java_source": "ProductController.delete",
+    "note": "删除单品。"
+  },
+  {
+    "module": "product",
+    "service": "product_service",
+    "handler": "update_display_flag",
+    "method": "POST",
+    "path": "/md/product/updateDisplayFlag",
+    "auth": "login",
+    "java_source": "ProductController.updateDisplayFlag",
+    "note": "更新单品展示开关。"
+  },
+  {
+    "module": "product",
+    "service": "product_service",
+    "handler": "page",
+    "method": "POST",
+    "path": "/md/product/page",
+    "auth": "login",
+    "java_source": "ProductController.page",
+    "note": "单品分页。"
+  },
+  {
+    "module": "product",
+    "service": "product_service",
+    "handler": "product_color_add",
+    "method": "POST",
+    "path": "/md/productColor/add",
+    "auth": "login",
+    "java_source": "ProductColorController.add",
+    "note": "新增颜色 SKU。"
+  },
+  {
+    "module": "product",
+    "service": "product_service",
+    "handler": "product_color_delete",
+    "method": "POST",
+    "path": "/md/productColor/delete",
+    "auth": "login",
+    "java_source": "ProductColorController.delete",
+    "note": "删除颜色 SKU。"
+  },
+  {
+    "module": "tag",
+    "service": "tag_service",
+    "handler": "add",
+    "method": "POST",
+    "path": "/md/tag/add",
+    "auth": "login",
+    "java_source": "TagController.add",
+    "note": "新增标签。"
+  },
+  {
+    "module": "tag",
+    "service": "tag_service",
+    "handler": "delete",
+    "method": "POST",
+    "path": "/md/tag/delete",
+    "auth": "login",
+    "java_source": "TagController.delete",
+    "note": "删除标签。"
+  },
+  {
+    "module": "tag",
+    "service": "tag_service",
+    "handler": "update",
+    "method": "POST",
+    "path": "/md/tag/update",
+    "auth": "login",
+    "java_source": "TagController.update",
+    "note": "更新标签。"
+  },
+  {
+    "module": "tag",
+    "service": "tag_service",
+    "handler": "list",
+    "method": "GET",
+    "path": "/md/tag/list",
+    "auth": "login",
+    "java_source": "TagController.list",
+    "note": "标签列表。"
+  },
+  {
+    "module": "tag",
+    "service": "tag_service",
+    "handler": "update_orders",
+    "method": "POST",
+    "path": "/md/tag/updateOrders",
+    "auth": "login",
+    "java_source": "TagController.updateOrders",
+    "note": "批量调整标签顺序。"
+  },
+  {
+    "module": "category",
+    "service": "category_service",
+    "handler": "add",
+    "method": "POST",
+    "path": "/md/categoryTag/add",
+    "auth": "login",
+    "java_source": "ClothingCategoryController.add",
+    "note": "新增服装分类节点。"
+  },
+  {
+    "module": "category",
+    "service": "category_service",
+    "handler": "update",
+    "method": "POST",
+    "path": "/md/categoryTag/update",
+    "auth": "login",
+    "java_source": "ClothingCategoryController.update",
+    "note": "更新服装分类节点。"
+  },
+  {
+    "module": "category",
+    "service": "category_service",
+    "handler": "delete",
+    "method": "POST",
+    "path": "/md/categoryTag/delete",
+    "auth": "login",
+    "java_source": "ClothingCategoryController.delete",
+    "note": "删除服装分类节点。"
+  },
+  {
+    "module": "category",
+    "service": "category_service",
+    "handler": "list",
+    "method": "POST",
+    "path": "/md/categoryTag/list",
+    "auth": "login",
+    "java_source": "ClothingCategoryController.list",
+    "note": "服装分类树。"
+  },
+  {
+    "module": "common",
+    "service": "common_service",
+    "handler": "download",
+    "method": "GET",
+    "path": "/common/download",
+    "auth": "login",
+    "java_source": "CommonController.fileDownload",
+    "note": "通用下载接口。"
+  },
+  {
+    "module": "common",
+    "service": "common_service",
+    "handler": "upload",
+    "method": "POST",
+    "path": "/common/upload",
+    "auth": "login",
+    "java_source": "CommonController.uploadFile",
+    "note": "本地磁盘上传接口。"
+  },
+  {
+    "module": "common",
+    "service": "common_service",
+    "handler": "uploads",
+    "method": "GET",
+    "path": "/common/uploads",
+    "auth": "login",
+    "java_source": "CommonController.serveFile",
+    "note": "访问本地上传资源。"
+  },
+  {
+    "module": "common",
+    "service": "common_service",
+    "handler": "download_resource",
+    "method": "GET",
+    "path": "/common/download/resource",
+    "auth": "login",
+    "java_source": "CommonController.resourceDownload",
+    "note": "下载本地资源文件。"
+  },
+  {
+    "module": "oss_file",
+    "service": "oss_file_service",
+    "handler": "upload",
+    "method": "POST",
+    "path": "/oss/file/upload",
+    "auth": "login",
+    "java_source": "OssFileController.upload",
+    "note": "上传单个文件到 OSS。"
+  },
+  {
+    "module": "oss_file",
+    "service": "oss_file_service",
+    "handler": "batch_upload",
+    "method": "POST",
+    "path": "/oss/file/batchUpload",
+    "auth": "login",
+    "java_source": "OssFileController.batchUpload",
+    "note": "批量上传文件到 OSS。"
+  },
+  {
+    "module": "oss_file",
+    "service": "oss_file_service",
+    "handler": "download",
+    "method": "GET",
+    "path": "/oss/file/download/{fileId}",
+    "auth": "login",
+    "java_source": "OssFileController.download",
+    "note": "按 fileId 下载 OSS 文件。"
+  },
+  {
+    "module": "oss_file",
+    "service": "oss_file_service",
+    "handler": "check_connection",
+    "method": "GET",
+    "path": "/oss/file/checkConnection",
+    "auth": "login",
+    "java_source": "OssFileController.checkConnection",
+    "note": "检查 OSS 连通性。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "profile_get",
+    "method": "GET",
+    "path": "/system/user/profile",
+    "auth": "login",
+    "java_source": "SysProfileController.profile",
+    "note": "获取个人资料。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "profile_update",
+    "method": "PUT",
+    "path": "/system/user/profile",
+    "auth": "login",
+    "java_source": "SysProfileController.updateProfile",
+    "note": "更新个人资料。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "profile_update_pwd",
+    "method": "PUT",
+    "path": "/system/user/profile/updatePwd",
+    "auth": "login",
+    "java_source": "SysProfileController.updatePwd",
+    "note": "修改个人密码。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "profile_avatar",
+    "method": "POST",
+    "path": "/system/user/profile/avatar",
+    "auth": "login",
+    "java_source": "SysProfileController.avatar",
+    "note": "上传个人头像。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "list",
+    "method": "GET",
+    "path": "/system/user/list",
+    "auth": "login",
+    "java_source": "SysUserController.list",
+    "note": "分页查询用户。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "get",
+    "method": "GET",
+    "path": "/system/user/{userId}",
+    "auth": "login",
+    "java_source": "SysUserController.getInfo",
+    "note": "查询用户详情。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "add",
+    "method": "POST",
+    "path": "/system/user",
+    "auth": "login",
+    "java_source": "SysUserController.add",
+    "note": "新增用户。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "update",
+    "method": "PUT",
+    "path": "/system/user",
+    "auth": "login",
+    "java_source": "SysUserController.edit",
+    "note": "修改用户。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "delete",
+    "method": "DELETE",
+    "path": "/system/user/{userIds}",
+    "auth": "login",
+    "java_source": "SysUserController.remove",
+    "note": "批量删除用户。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "change_status",
+    "method": "PUT",
+    "path": "/system/user/changeStatus",
+    "auth": "login",
+    "java_source": "SysUserController.changeStatus",
+    "note": "启停用户。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "reset_pwd",
+    "method": "PUT",
+    "path": "/system/user/resetPwd",
+    "auth": "login",
+    "java_source": "SysUserController.resetPwd",
+    "note": "重置密码。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "auth_role_get",
+    "method": "GET",
+    "path": "/system/user/authRole/{userId}",
+    "auth": "login",
+    "java_source": "SysUserController.authRole",
+    "note": "查询用户可分配角色。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "auth_role_update",
+    "method": "PUT",
+    "path": "/system/user/authRole",
+    "auth": "login",
+    "java_source": "SysUserController.insertAuthRole",
+    "note": "批量给用户授权角色。"
+  },
+  {
+    "module": "sys_user",
+    "service": "sys_user_service",
+    "handler": "export",
+    "method": "POST",
+    "path": "/system/user/export",
+    "auth": "login",
+    "java_source": "SysUserController.export",
+    "note": "导出用户 Excel。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "auth_user_allocated_list",
+    "method": "GET",
+    "path": "/system/role/authUser/allocatedList",
+    "auth": "login",
+    "java_source": "SysRoleController.allocatedList",
+    "note": "已分配用户列表。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "auth_user_unallocated_list",
+    "method": "GET",
+    "path": "/system/role/authUser/unallocatedList",
+    "auth": "login",
+    "java_source": "SysRoleController.unallocatedList",
+    "note": "未分配用户列表。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "auth_user_cancel",
+    "method": "PUT",
+    "path": "/system/role/authUser/cancel",
+    "auth": "login",
+    "java_source": "SysRoleController.cancelAuthUser",
+    "note": "取消单个用户角色。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "auth_user_cancel_all",
+    "method": "PUT",
+    "path": "/system/role/authUser/cancelAll",
+    "auth": "login",
+    "java_source": "SysRoleController.cancelAuthUserAll",
+    "note": "批量取消用户角色。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "auth_user_select_all",
+    "method": "PUT",
+    "path": "/system/role/authUser/selectAll",
+    "auth": "login",
+    "java_source": "SysRoleController.selectAuthUserAll",
+    "note": "批量授权用户到角色。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "list",
+    "method": "GET",
+    "path": "/system/role/list",
+    "auth": "login",
+    "java_source": "SysRoleController.list",
+    "note": "分页查询角色。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "get",
+    "method": "GET",
+    "path": "/system/role/{roleId}",
+    "auth": "login",
+    "java_source": "SysRoleController.getInfo",
+    "note": "查询角色详情。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "add",
+    "method": "POST",
+    "path": "/system/role",
+    "auth": "login",
+    "java_source": "SysRoleController.add",
+    "note": "新增角色。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "update",
+    "method": "PUT",
+    "path": "/system/role",
+    "auth": "login",
+    "java_source": "SysRoleController.edit",
+    "note": "修改角色。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "change_status",
+    "method": "PUT",
+    "path": "/system/role/changeStatus",
+    "auth": "login",
+    "java_source": "SysRoleController.changeStatus",
+    "note": "启停角色。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "delete",
+    "method": "DELETE",
+    "path": "/system/role/{roleIds}",
+    "auth": "login",
+    "java_source": "SysRoleController.remove",
+    "note": "批量删除角色。"
+  },
+  {
+    "module": "sys_role",
+    "service": "sys_role_service",
+    "handler": "export",
+    "method": "POST",
+    "path": "/system/role/export",
+    "auth": "login",
+    "java_source": "SysRoleController.export",
+    "note": "导出角色 Excel。"
+  },
+  {
+    "module": "sys_menu",
+    "service": "sys_menu_service",
+    "handler": "list",
+    "method": "GET",
+    "path": "/system/menu/list",
+    "auth": "login",
+    "java_source": "SysMenuController.list",
+    "note": "查询菜单列表。"
+  },
+  {
+    "module": "sys_menu",
+    "service": "sys_menu_service",
+    "handler": "treeselect",
+    "method": "GET",
+    "path": "/system/menu/treeselect",
+    "auth": "login",
+    "java_source": "SysMenuController.treeselect",
+    "note": "菜单树下拉。"
+  },
+  {
+    "module": "sys_menu",
+    "service": "sys_menu_service",
+    "handler": "role_menu_treeselect",
+    "method": "GET",
+    "path": "/system/menu/roleMenuTreeselect/{roleId}",
+    "auth": "login",
+    "java_source": "SysMenuController.roleMenuTreeselect",
+    "note": "角色菜单树。"
+  },
+  {
+    "module": "sys_menu",
+    "service": "sys_menu_service",
+    "handler": "get",
+    "method": "GET",
+    "path": "/system/menu/{menuId}",
+    "auth": "login",
+    "java_source": "SysMenuController.getInfo",
+    "note": "查询菜单详情。"
+  },
+  {
+    "module": "sys_menu",
+    "service": "sys_menu_service",
+    "handler": "add",
+    "method": "POST",
+    "path": "/system/menu",
+    "auth": "login",
+    "java_source": "SysMenuController.add",
+    "note": "新增菜单。"
+  },
+  {
+    "module": "sys_menu",
+    "service": "sys_menu_service",
+    "handler": "update",
+    "method": "PUT",
+    "path": "/system/menu",
+    "auth": "login",
+    "java_source": "SysMenuController.edit",
+    "note": "修改菜单。"
+  },
+  {
+    "module": "sys_menu",
+    "service": "sys_menu_service",
+    "handler": "delete",
+    "method": "DELETE",
+    "path": "/system/menu/{menuId}",
+    "auth": "login",
+    "java_source": "SysMenuController.remove",
+    "note": "删除菜单。"
+  }
+]
