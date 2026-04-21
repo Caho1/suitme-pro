@@ -15,8 +15,11 @@ class AiJoin(Base, AuditMixin, SoftDeleteMixin):
 
     join_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     customer_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    matching_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
+    @property
+    def matching_id(self) -> None:
+        """兼容旧响应字段；真实表当前没有 matching_id。"""
+        return None
 
 
 class AiOutfit(Base, AuditMixin, SoftDeleteMixin):
@@ -26,8 +29,9 @@ class AiOutfit(Base, AuditMixin, SoftDeleteMixin):
 
     outfit_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     join_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    angle: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    customer_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    product_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    product_color_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
 
 class AiTask(Base, AuditMixin, SoftDeleteMixin):
@@ -37,6 +41,8 @@ class AiTask(Base, AuditMixin, SoftDeleteMixin):
 
     task_id: Mapped[str] = mapped_column(String(100), primary_key=True)
     join_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    customer_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     angle: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    task_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
-    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    task_status: Mapped[str | None] = mapped_column('status', String(32), nullable=True)
+    image_url: Mapped[str | None] = mapped_column('url', String(500), nullable=True)
+    size: Mapped[str | None] = mapped_column(String(10), nullable=True)

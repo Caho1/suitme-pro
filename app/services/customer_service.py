@@ -14,16 +14,7 @@ from app.core.response import error, mp_page, success, to_ajax
 from app.models.customer import Customer
 from app.services.ai_client import AiClient
 from app.services.base import SkeletonService
-from app.services.biz_support import (
-    AI_STATUS_COMPLETED,
-    build_mp_page_payload,
-    extract_ai_submission,
-    json_dumps_if_needed,
-    json_loads_if_possible,
-    next_numeric_id,
-    resolve_operator,
-    resolve_user_id,
-)
+from app.services.biz_support import AI_STATUS_COMPLETED, build_mp_page_payload, extract_ai_submission, json_loads_if_possible, next_numeric_id, resolve_operator, resolve_user_id
 
 
 class CustomerService(SkeletonService):
@@ -40,15 +31,12 @@ class CustomerService(SkeletonService):
     def _base_query(self, current_user: CurrentUser | None = None) -> Any:
         """构造顾客基础查询。"""
         stmt = select(Customer).where(Customer.del_flag == '0').order_by(Customer.customer_id.desc())
-        if current_user is not None and current_user.user_id is not None:
-            stmt = stmt.where(Customer.user_id == current_user.user_id)
         return stmt
 
     def _serialize_customer(self, customer: Customer) -> dict[str, Any]:
         """把顾客 ORM 转成前端可直接消费的结构。"""
         data = {
             'customerId': customer.customer_id,
-            'userId': customer.user_id,
             'name': customer.name,
             'pictureUrl': customer.picture_url,
             'digitalTaskId': customer.digital_task_id,
@@ -80,10 +68,8 @@ class CustomerService(SkeletonService):
         now = datetime.now()
         customer = Customer(
             customer_id=next_numeric_id(db, Customer, Customer.customer_id),
-            user_id=resolve_user_id(current_user, payload),
             name=(payload.get('name') or payload.get('customerName') or '').strip() or None,
             picture_url=(payload.get('pictureUrl') or payload.get('picture') or '').strip() or None,
-            body_profile_json=json_dumps_if_needed(payload.get('bodyProfile') or payload.get('bodyProfileJson')),
             create_by=operator,
             create_time=now,
             update_by=operator,
@@ -94,9 +80,9 @@ class CustomerService(SkeletonService):
         db.flush()
 
         ai_payload = {
-            'userId': customer.user_id,
+            'userId': resolve_user_id(current_user, payload),
             'pictureUrl': customer.picture_url,
-            'bodyProfile': payload.get('bodyProfile') or json_loads_if_possible(customer.body_profile_json),
+            'bodyProfile': payload.get('bodyProfile') or payload.get('bodyProfileJson'),
             'size': payload.get('size'),
         }
         try:
@@ -236,8 +222,6 @@ class CustomerService(SkeletonService):
             customer.name = (payload.get('name') or payload.get('customerName') or '').strip() or None
         if 'pictureUrl' in payload or 'picture' in payload:
             customer.picture_url = (payload.get('pictureUrl') or payload.get('picture') or '').strip() or None
-        if 'bodyProfile' in payload or 'bodyProfileJson' in payload:
-            customer.body_profile_json = json_dumps_if_needed(payload.get('bodyProfile') or payload.get('bodyProfileJson'))
         if 'digitalTaskId' in payload:
             customer.digital_task_id = (payload.get('digitalTaskId') or '').strip() or None
         if 'digitalImgUrl' in payload:

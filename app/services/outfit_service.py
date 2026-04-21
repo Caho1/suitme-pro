@@ -41,8 +41,6 @@ class OutfitService(SkeletonService):
     def _base_join_query(self, current_user: CurrentUser | None = None) -> Any:
         """构造穿搭批次基础查询。"""
         stmt = select(AiJoin).where(AiJoin.del_flag == '0').order_by(AiJoin.join_id.desc())
-        if current_user is not None and current_user.user_id is not None:
-            stmt = stmt.join(Customer, Customer.customer_id == AiJoin.customer_id, isouter=True).where(Customer.user_id == current_user.user_id)
         return stmt
 
     def _serialize_task(self, task: AiTask) -> dict[str, Any]:
@@ -65,8 +63,9 @@ class OutfitService(SkeletonService):
         return {
             'outfitId': outfit.outfit_id,
             'joinId': outfit.join_id,
-            'angle': outfit.angle,
-            'status': outfit.status,
+            'customerId': outfit.customer_id,
+            'productId': outfit.product_id,
+            'productColorId': outfit.product_color_id,
             'createBy': outfit.create_by,
             'createTime': outfit.create_time.strftime('%Y-%m-%d %H:%M:%S') if outfit.create_time else None,
             'updateBy': outfit.update_by,
@@ -84,27 +83,30 @@ class OutfitService(SkeletonService):
         stmt = select(AiOutfit).where(AiOutfit.join_id == join_id).where(AiOutfit.del_flag == '0').order_by(AiOutfit.outfit_id.asc())
         return list(db.scalars(stmt).all())
 
-    def _sync_join_status(self, db: Session, join: AiJoin, operator: str) -> str:
-        """根据子任务状态汇总批次状态。"""
-        tasks = self._load_tasks(db, join.join_id)
+    def _compute_join_status(self, tasks: list[AiTask]) -> str:
+        """根据子任务状态计算批次状态，不写数据库。"""
         statuses = {normalize_ai_status(task.task_status) for task in tasks if task.del_flag == '0'}
         if not statuses:
-            join.status = AI_STATUS_NONE
+            return AI_STATUS_NONE
         elif statuses == {AI_STATUS_COMPLETED}:
-            join.status = AI_STATUS_COMPLETED
+            return AI_STATUS_COMPLETED
         elif AI_STATUS_FAILED in statuses and AI_STATUS_COMPLETED not in statuses and AI_STATUS_PROCESSING not in statuses and AI_STATUS_SUBMITTED not in statuses:
-            join.status = AI_STATUS_FAILED
+            return AI_STATUS_FAILED
         elif AI_STATUS_PROCESSING in statuses:
-            join.status = AI_STATUS_PROCESSING
+            return AI_STATUS_PROCESSING
         elif AI_STATUS_SUBMITTED in statuses:
-            join.status = AI_STATUS_SUBMITTED
+            return AI_STATUS_SUBMITTED
         elif AI_STATUS_COMPLETED in statuses and AI_STATUS_FAILED in statuses:
-            join.status = AI_STATUS_PROCESSING
-        else:
-            join.status = next(iter(statuses), AI_STATUS_NONE)
+            return AI_STATUS_PROCESSING
+        return next(iter(statuses), AI_STATUS_NONE) or AI_STATUS_NONE
+
+    def _sync_join_status(self, db: Session, join: AiJoin, operator: str) -> str:
+        """根据子任务状态汇总批次状态，只更新审计时间。"""
+        tasks = self._load_tasks(db, join.join_id)
+        status = self._compute_join_status(tasks)
         join.update_by = operator
         join.update_time = datetime.now()
-        return join.status or AI_STATUS_NONE
+        return status
 
     def _serialize_join(self, db: Session, join: AiJoin) -> dict[str, Any]:
         """序列化穿搭批次，并带上任务与图片聚合结果。"""
@@ -116,7 +118,7 @@ class OutfitService(SkeletonService):
             'joinId': join.join_id,
             'customerId': join.customer_id,
             'matchingId': join.matching_id,
-            'status': join.status,
+            'status': self._compute_join_status(tasks),
             'tasks': task_dicts,
             'outfits': [self._serialize_outfit(item) for item in outfits],
             'outfitImages': image_list,
@@ -158,12 +160,10 @@ class OutfitService(SkeletonService):
         outfit = db.scalar(
             select(AiOutfit)
             .where(AiOutfit.join_id == task.join_id)
-            .where(AiOutfit.angle == task.angle)
             .where(AiOutfit.del_flag == '0')
             .limit(1)
         )
         if outfit is not None:
-            outfit.status = task.task_status
             outfit.update_by = operator
             outfit.update_time = datetime.now()
 
@@ -181,8 +181,6 @@ class OutfitService(SkeletonService):
         join = AiJoin(
             join_id=next_numeric_id(db, AiJoin, AiJoin.join_id),
             customer_id=get_int(payload.get('customerId'), 0) or None,
-            matching_id=get_int(payload.get('matchingId'), 0) or None,
-            status=AI_STATUS_SUBMITTED,
             create_by=operator,
             create_time=now,
             update_by=operator,
@@ -204,8 +202,9 @@ class OutfitService(SkeletonService):
                     AiOutfit(
                         outfit_id=next_numeric_id(db, AiOutfit, AiOutfit.outfit_id),
                         join_id=join.join_id,
-                        angle=angle,
-                        status=task_status,
+                        customer_id=join.customer_id,
+                        product_id=get_int(payload.get('productId'), 0) or None,
+                        product_color_id=get_int(payload.get('productColorId'), 0) or None,
                         create_by=operator,
                         create_time=now,
                         update_by=operator,
@@ -218,9 +217,11 @@ class OutfitService(SkeletonService):
                     AiTask(
                         task_id=task_id,
                         join_id=join.join_id,
+                        customer_id=join.customer_id,
                         angle=angle,
                         task_status=task_status,
                         image_url=parsed['image_url'],
+                        size=str(payload.get('size') or '1K'),
                         create_by=operator,
                         create_time=now,
                         update_by=operator,
@@ -259,12 +260,9 @@ class OutfitService(SkeletonService):
                 join = db.scalar(self._base_join_query(current_user).where(AiJoin.join_id == task.join_id))
         else:
             customer_id = get_int(payload.get('customerId'))
-            matching_id = get_int(payload.get('matchingId'))
             stmt = self._base_join_query(current_user)
             if customer_id > 0:
                 stmt = stmt.where(AiJoin.customer_id == customer_id)
-            if matching_id > 0:
-                stmt = stmt.where(AiJoin.matching_id == matching_id)
             join = db.scalar(stmt.limit(1))
 
         if join is None:
@@ -302,12 +300,10 @@ class OutfitService(SkeletonService):
             outfit = db.scalar(
                 select(AiOutfit)
                 .where(AiOutfit.join_id == task.join_id)
-                .where(AiOutfit.angle == task.angle)
                 .where(AiOutfit.del_flag == '0')
                 .limit(1)
             )
             if outfit is not None:
-                outfit.status = task.task_status
                 outfit.update_by = resolve_operator(current_user)
                 outfit.update_time = datetime.now()
             db.commit()
@@ -328,12 +324,9 @@ class OutfitService(SkeletonService):
         customer_id = get_int(params.get('customerId'))
         if customer_id > 0:
             stmt = stmt.where(AiJoin.customer_id == customer_id)
-        matching_id = get_int(params.get('matchingId'))
-        if matching_id > 0:
-            stmt = stmt.where(AiJoin.matching_id == matching_id)
         status = (params.get('status') or '').strip().lower()
         if status:
-            stmt = stmt.where(AiJoin.status == status)
+            stmt = stmt.join(AiTask, AiTask.join_id == AiJoin.join_id).where(AiTask.task_status == status)
         total = int(db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery())) or 0)
         rows = list(db.scalars(stmt.offset((page_num - 1) * page_size).limit(page_size)).all())
         return mp_page(

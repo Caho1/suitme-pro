@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from app.core.sqlalchemy_compat import BigInteger, String, Text, Mapped, mapped_column
+from app.core.sqlalchemy_compat import BigInteger, String, Mapped, mapped_column
 
 from app.models.base import AuditMixin, Base, SoftDeleteMixin
 
@@ -17,9 +17,17 @@ class Customer(Base, AuditMixin, SoftDeleteMixin):
     __tablename__ = 't_customer'
 
     customer_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    user_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     picture_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    digital_task_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    digital_task_id: Mapped[str | None] = mapped_column('task_id', String(100), nullable=True)
     digital_img_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    body_profile_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    @property
+    def user_id(self) -> None:
+        """兼容旧服务层字段；真实表当前没有 user_id。"""
+        return None
+
+    @property
+    def body_profile_json(self) -> None:
+        """兼容旧服务层字段；真实表当前没有 body_profile_json。"""
+        return None
