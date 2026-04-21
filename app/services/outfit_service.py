@@ -123,6 +123,36 @@ class OutfitService(SkeletonService):
         payload['url'] = task.image_url
         return payload
 
+    def _task_progress(self, status: str | None) -> int:
+        """把任务状态折算成前端旧列表页需要的进度值。"""
+        normalized = normalize_ai_status(status)
+        if normalized == AI_STATUS_COMPLETED:
+            return 100
+        if normalized == AI_STATUS_PROCESSING:
+            return 50
+        if normalized == AI_STATUS_FAILED:
+            return 0
+        if normalized == AI_STATUS_SUBMITTED:
+            return 10
+        return 0
+
+    def _serialize_legacy_task_page_item(self, task: AiTask) -> dict[str, Any]:
+        """序列化旧版 `/tasks/outfit/users/*` 所需的蛇形字段。"""
+        status = normalize_ai_status(task.task_status)
+        completed_at = None
+        if status in {AI_STATUS_COMPLETED, AI_STATUS_FAILED} and task.update_time is not None:
+            completed_at = task.update_time.strftime('%Y-%m-%d %H:%M:%S')
+        return {
+            'task_id': task.task_id,
+            'status': status,
+            'progress': self._task_progress(status),
+            'angle': task.angle,
+            'created_at': task.create_time.strftime('%Y-%m-%d %H:%M:%S') if task.create_time else None,
+            'completed_at': completed_at,
+            'image_url': task.image_url,
+            'error_message': None,
+        }
+
     def _serialize_outfit(self, outfit: AiOutfit) -> dict[str, Any]:
         """序列化穿搭明细记录。"""
         return {
@@ -665,6 +695,35 @@ class OutfitService(SkeletonService):
         rows = list(db.scalars(stmt.offset((page_num - 1) * page_size).limit(page_size)).all())
         return mp_page(
             records=[self._serialize_task_page_item(item) for item in rows],
+            total=total,
+            size=page_size,
+            current=page_num,
+            pages=build_mp_page_payload([], total, page_num, page_size)['pages'],
+        )
+
+    async def legacy_task_page(
+        self,
+        db: Session,
+        user_id: str,
+        request: Request | None = None,
+        current_user: CurrentUser | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """兼容前端旧版 `/tasks/outfit/users/{userId|all}` 任务列表。"""
+        params = await collect_params(request) if request is not None else {}
+        page_num = max(1, get_int(params.get('pageNum') or params.get('current'), 1))
+        page_size = max(1, get_int(params.get('pageSize') or params.get('size'), 10))
+
+        stmt = self._base_task_query(current_user)
+        customer_id = get_int(user_id)
+        if customer_id > 0:
+            stmt = stmt.where(AiTask.customer_id == customer_id)
+
+        total = int(db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery())) or 0)
+        rows = list(db.scalars(stmt.offset((page_num - 1) * page_size).limit(page_size)).all())
+
+        return mp_page(
+            records=[self._serialize_legacy_task_page_item(item) for item in rows],
             total=total,
             size=page_size,
             current=page_num,

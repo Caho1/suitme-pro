@@ -397,3 +397,68 @@ async def test_task_page_returns_flat_task_rows_with_cn_fields(db_session, monke
     assert record['status'] == 'completed'
     assert record['statusCN'] == '已完成'
     assert record['angleCN'] == '正面'
+
+
+@pytest.mark.asyncio
+async def test_legacy_task_page_returns_snake_case_records_for_frontend_list(db_session, monkeypatch) -> None:
+    """旧前端列表页要能读取 `/tasks/outfit/users/*` 的蛇形字段。"""
+    now = datetime.now()
+    db_session.add_all(
+        [
+            AiTask(
+                task_id='task-front',
+                join_id=1,
+                customer_id=42,
+                angle='front',
+                task_status='completed',
+                image_url='https://cdn.test/front.png',
+                size='9:16',
+                create_by='system',
+                create_time=now,
+                update_by='system',
+                update_time=now,
+                del_flag='0',
+            ),
+            AiTask(
+                task_id='task-back',
+                join_id=1,
+                customer_id=43,
+                angle='back',
+                task_status='submitted',
+                image_url=None,
+                size='9:16',
+                create_by='system',
+                create_time=now,
+                update_by='system',
+                update_time=now,
+                del_flag='0',
+            ),
+        ]
+    )
+    db_session.commit()
+
+    service = OutfitService()
+
+    async def fake_collect_params(request) -> dict[str, object]:  # noqa: ANN001
+        return {'pageNum': 1, 'pageSize': 10}
+
+    monkeypatch.setattr('app.services.outfit_service.collect_params', fake_collect_params)
+
+    response = await service.legacy_task_page(
+        db=db_session,
+        user_id='42',
+        request=object(),
+        current_user=CurrentUser(user_name='system'),
+    )
+
+    assert response['code'] == 200
+    assert response['data']['total'] == 1
+    record = response['data']['records'][0]
+    assert record['task_id'] == 'task-front'
+    assert record['status'] == 'completed'
+    assert record['progress'] == 100
+    assert record['angle'] == 'front'
+    assert record['created_at'] == now.strftime('%Y-%m-%d %H:%M:%S')
+    assert record['completed_at'] == now.strftime('%Y-%m-%d %H:%M:%S')
+    assert record['image_url'] == 'https://cdn.test/front.png'
+    assert record['error_message'] is None
