@@ -49,3 +49,82 @@
 - AI 任务查询：`GET {{baseUrl}}/tasks/{{taskId}}`
 
 Bearer Token、超时、JSON 字段名都要保持兼容。
+
+## 六、本地修改到服务器发布链路
+
+后续 Agent 接手时，涉及代码或依赖变更必须走这条链路：
+
+1. **只在本地仓库修改代码**
+   - `suitme-model` 本地路径：`/Users/jiahao/Desktop/PythonProject/suitme-model`
+   - `suitme-pro` 本地路径：`/Users/jiahao/Desktop/PythonProject/suitme-pro`
+   - 不要直接在服务器 `/data/suitme/suitme-*` 里改代码；服务器只用于拉取、安装依赖、重启和验证。
+
+2. **本地验证后提交并推送 GitHub**
+   - `suitme-model` 远端：`https://github.com/Caho1/suitme-model.git`
+   - `suitme-pro` 远端：`https://github.com/Caho1/suitme-pro.git`
+   - 常规命令：
+     ```bash
+     git status --short
+     git add <changed-files>
+     git commit -m "<message>"
+     git push origin main
+     ```
+
+3. **服务器拉取最新代码**
+   - 服务器：`root@43.139.129.10`
+   - SSH 密钥路径：`/Users/jiahao/Downloads/suitme.pem`
+   - 服务器项目目录：
+     - `/data/suitme/suitme-model`
+     - `/data/suitme/suitme-pro`
+   - 拉取示例：
+     ```bash
+     ssh -i /Users/jiahao/Downloads/suitme.pem root@43.139.129.10
+     cd /data/suitme/suitme-model
+     git pull --ff-only origin main
+     uv sync
+
+     cd /data/suitme/suitme-pro
+     git pull --ff-only origin main
+     uv sync
+     ```
+
+4. **端口和服务关系**
+   - `suitme-model` 监听 `9001`，`.env` 里应保持：`SERVICE_PORT=9001`
+   - `suitme-pro` 监听 `9000`，`.env` 里应保持：
+     - `APP_PORT=9000`
+     - `SUITME_AI_BASE_URL=http://127.0.0.1:9001`
+   - `suitme-pro` 调用 `suitme-model`，所以改动 model 后通常要先重启 `suitme-model`，再重启 `suitme-pro`。
+
+5. **systemd 管理命令**
+   - 服务名：
+     - `suitme-model.service`
+     - `suitme-pro.service`
+   - 常用命令：
+     ```bash
+     systemctl status suitme-model suitme-pro
+     systemctl restart suitme-model
+     systemctl restart suitme-pro
+     systemctl restart suitme-model suitme-pro
+     ```
+
+6. **日志路径**
+   - `suitme-model` 日志：`/data/log/suitme-model.log`
+   - `suitme-pro` 日志：`/data/log/suitme-pro.log`
+   - 查看日志：
+     ```bash
+     tail -f /data/log/suitme-model.log
+     tail -f /data/log/suitme-pro.log
+     ```
+
+7. **发布后验证**
+   - 服务健康检查：
+     ```bash
+     curl -sS http://127.0.0.1:9001/health
+     curl -sS http://127.0.0.1:9000/
+     ```
+   - 验证 `suitme-pro -> suitme-model` 调用链：
+     ```bash
+     curl -sS -i http://127.0.0.1:9000/api/test/getTaskStatus/connectivity-probe
+     ```
+     这个测试 taskId 不存在时返回业务 404/错误包装是正常的；只要 `suitme-model` 日志出现
+     `GET /tasks/connectivity-probe`，说明调用 URL 已经打到 `9001`。
