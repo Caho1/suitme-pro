@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     app_name: str = Field(default="suitme-python", alias="APP_NAME")
     app_env: str = Field(default="dev", alias="APP_ENV")
     app_host: str = Field(default="0.0.0.0", alias="APP_HOST")
-    app_port: int = Field(default=8000, alias="APP_PORT")
+    app_port: int = Field(default=9000, alias="APP_PORT")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     log_json: bool = Field(default=False, alias="LOG_JSON")
     timezone: str = Field(default="Asia/Shanghai", alias="TIMEZONE")
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     jwt_expire_minutes: int = Field(default=30, alias="JWT_EXPIRE_MINUTES")
 
-    suitme_ai_base_url: str = Field(default="http://127.0.0.1:8000", alias="SUITME_AI_BASE_URL")
+    suitme_ai_base_url: str = Field(default="http://127.0.0.1:9001", alias="SUITME_AI_BASE_URL")
     suitme_ai_auth_token: str | None = Field(default=None, alias="SUITME_AI_AUTH_TOKEN")
 
     suitme_upload_profile: str = Field(default="./uploads", alias="SUITME_UPLOAD_PROFILE")

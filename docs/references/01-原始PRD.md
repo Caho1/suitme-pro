@@ -278,7 +278,7 @@ suitme-python/
 | AI 穿搭生图 | POST | `{baseUrl}/models/outfit` | `OutfitApiReq { userId, taskId, angle, outfitImages, size }` | `ApiResp<AiImgData>` |
 | AI 任务查询 | GET | `{baseUrl}/tasks/{taskId}` | - | `ApiResp<TaskData>` |
 
-- `baseUrl` 由 `.env` 注入：`SUITME_AI_BASE_URL=http://127.0.0.1:8000`
+- `baseUrl` 由 `.env` 注入：`SUITME_AI_BASE_URL=http://127.0.0.1:9001`
 - 可选 Bearer：`SUITME_AI_AUTH_TOKEN=...`
 - 超时：连接 60s / 读 60s / 整体 300s（对齐 Java 端 OkHttp 配置）
 - 字段命名：请求/响应 JSON 字段命名与 Java 侧保持**完全一致**（通过 Pydantic `alias` 保证）
@@ -374,7 +374,7 @@ suitme-python/
 
 ### 方案 B：Sidecar 并存，按接口逐步切流
 
-- Python 服务起在不同端口（如 `:8001`）
+- Python 服务起在不同端口（如 `:9001`）
 - Java 服务保留不动，前端用 Nginx/网关按路径转发：`/customer/*` → Python，其余 → Java
 - 一个接口一个接口切，前端侧零感知
 
