@@ -437,6 +437,10 @@ class OutfitService(SkeletonService):
         operator = resolve_operator(current_user)
         now = datetime.now()
         customer_id = get_int(payload.get('customerId'), 0)
+
+        if customer_id <= 0:
+            return error('请选择用户')
+
         customer = self._load_customer(db, customer_id)
 
         if customer_id > 0 and customer is None:

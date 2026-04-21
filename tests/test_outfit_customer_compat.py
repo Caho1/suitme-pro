@@ -220,6 +220,30 @@ async def test_generate_outfit_img_uses_matching_list_and_customer_task(db_sessi
 
 
 @pytest.mark.asyncio
+async def test_generate_outfit_img_requires_customer(db_session, monkeypatch) -> None:
+    """缺少 customerId 时，要返回明确业务错误而不是数据库 500。"""
+    service = OutfitService()
+
+    async def fake_read_json_body(request) -> dict[str, object]:  # noqa: ANN001
+        return {
+            'userId': 'qa-smoke',
+            'taskId': 'legacy-body-task',
+            'baseModelImageUrl': 'data:image/png;base64,abc=',
+            'matchingList': [[{'productColorId': 1}]],
+        }
+
+    monkeypatch.setattr('app.services.outfit_service.read_json_body', fake_read_json_body)
+
+    response = await service.generate_outfit_img(
+        db=db_session,
+        request=object(),
+        current_user=CurrentUser(user_name='system'),
+    )
+
+    assert response == {'code': 500, 'msg': '请选择用户'}
+
+
+@pytest.mark.asyncio
 async def test_get_outfit_img_returns_java_outfit_vo_shape(db_session, monkeypatch) -> None:
     """查询结果要返回 front/side/back 三面图片和商品列表。"""
     now = datetime.now()
