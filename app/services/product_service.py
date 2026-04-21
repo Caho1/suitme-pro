@@ -22,8 +22,6 @@ class ProductService(SkeletonService):
     def _base_product_query(self, current_user: CurrentUser | None = None) -> Any:
         """构造单品基础查询。"""
         stmt = select(Product).where(Product.del_flag == '0').order_by(Product.product_id.desc())
-        if current_user is not None and current_user.user_id is not None:
-            stmt = stmt.where(Product.user_id == current_user.user_id)
         return stmt
 
     def _base_color_query(self) -> Any:
@@ -37,6 +35,10 @@ class ProductService(SkeletonService):
             'productId': color.product_id,
             'colorName': color.color_name,
             'imageUrl': color.image_url,
+            'name': color.color_name,
+            'frontImageUrl': color.front_image_url,
+            'sideImageUrl': color.side_image_url,
+            'backImageUrl': color.back_image_url,
             'createBy': color.create_by,
             'createTime': color.create_time.strftime('%Y-%m-%d %H:%M:%S') if color.create_time else None,
             'updateBy': color.update_by,
@@ -56,9 +58,14 @@ class ProductService(SkeletonService):
             'productId': product.product_id,
             'userId': product.user_id,
             'name': product.name,
-            'pictureUrl': product.picture_url,
+            'pictureUrl': colors[0].get('frontImageUrl') if colors else product.picture_url,
+            'categoryTagId': product.category_tag_id,
+            'sceneTagId': product.scene_tag_id,
+            'styleTagId': product.style_tag_id,
+            'materialTagId': product.material_tag_id,
             'displayFlag': product.display_flag,
             'remark': product.remark,
+            'colors': colors,
             'productColorList': colors,
             'createBy': product.create_by,
             'createTime': product.create_time.strftime('%Y-%m-%d %H:%M:%S') if product.create_time else None,
@@ -83,6 +90,10 @@ class ProductService(SkeletonService):
             user_id=resolve_user_id(current_user, payload),
             name=(payload.get('name') or '').strip() or None,
             picture_url=(payload.get('pictureUrl') or '').strip() or None,
+            category_tag_id=get_int(payload.get('categoryTagId'), 0) or None,
+            scene_tag_id=get_int(payload.get('sceneTagId'), 0) or None,
+            style_tag_id=get_int(payload.get('styleTagId'), 0) or None,
+            material_tag_id=get_int(payload.get('materialTagId'), 0) or None,
             display_flag=get_int(payload.get('displayFlag'), 1),
             remark=(payload.get('remark') or '').strip() or None,
             create_by=operator,
@@ -115,6 +126,14 @@ class ProductService(SkeletonService):
             product.name = (payload.get('name') or '').strip() or None
         if 'pictureUrl' in payload:
             product.picture_url = (payload.get('pictureUrl') or '').strip() or None
+        if 'categoryTagId' in payload:
+            product.category_tag_id = get_int(payload.get('categoryTagId'), product.category_tag_id or 0) or None
+        if 'sceneTagId' in payload:
+            product.scene_tag_id = get_int(payload.get('sceneTagId'), product.scene_tag_id or 0) or None
+        if 'styleTagId' in payload:
+            product.style_tag_id = get_int(payload.get('styleTagId'), product.style_tag_id or 0) or None
+        if 'materialTagId' in payload:
+            product.material_tag_id = get_int(payload.get('materialTagId'), product.material_tag_id or 0) or None
         if 'displayFlag' in payload:
             product.display_flag = get_int(payload.get('displayFlag'), product.display_flag or 0)
         if 'remark' in payload:
@@ -181,15 +200,19 @@ class ProductService(SkeletonService):
     ) -> dict[str, Any]:
         """按 MyBatis-Plus 风格分页查询单品。"""
         params = await collect_params(request) if request is not None else {}
+        product_filter = params.get('product') if isinstance(params.get('product'), dict) else {}
         page_num = max(1, get_int(params.get('pageNum') or params.get('current'), 1))
         page_size = max(1, get_int(params.get('pageSize') or params.get('size'), 10))
         stmt = self._base_product_query(current_user)
-        name = (params.get('name') or '').strip()
+        name = (params.get('name') or product_filter.get('name') or '').strip()
         if name:
             stmt = stmt.where(Product.name.like(f'%{name}%'))
-        display_flag = params.get('displayFlag')
+        display_flag = params.get('displayFlag', product_filter.get('displayFlag', 1))
         if display_flag not in (None, ''):
             stmt = stmt.where(Product.display_flag == get_int(display_flag))
+        category_tag_id = get_int(params.get('categoryTagId') or product_filter.get('categoryTagId'))
+        if category_tag_id > 0:
+            stmt = stmt.where(Product.category_tag_id == category_tag_id)
         total = int(db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery())) or 0)
         rows = list(db.scalars(stmt.offset((page_num - 1) * page_size).limit(page_size)).all())
         return mp_page(
@@ -220,8 +243,10 @@ class ProductService(SkeletonService):
         color = ProductColor(
             product_color_id=next_numeric_id(db, ProductColor, ProductColor.product_color_id),
             product_id=product_id,
-            color_name=(payload.get('colorName') or '').strip() or None,
-            image_url=(payload.get('imageUrl') or '').strip() or None,
+            color_name=(payload.get('colorName') or payload.get('name') or '').strip() or None,
+            image_url=(payload.get('imageUrl') or payload.get('frontImageUrl') or '').strip() or None,
+            side_image_url=(payload.get('sideImageUrl') or '').strip() or None,
+            back_image_url=(payload.get('backImageUrl') or '').strip() or None,
             create_by=operator,
             create_time=now,
             update_by=operator,
