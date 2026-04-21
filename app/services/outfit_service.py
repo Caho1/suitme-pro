@@ -455,6 +455,28 @@ class OutfitService(SkeletonService):
             outfit.update_by = operator
             outfit.update_time = datetime.now()
 
+    async def _refresh_tasks_if_needed(self, db: Session, tasks: list[AiTask], operator: str) -> None:
+        """刷新列表里仍处于非终态的任务，保证列表页看到最新结果。"""
+        updated_join_ids: set[int] = set()
+        changed = False
+        for task in tasks:
+            if normalize_ai_status(task.task_status) in {AI_STATUS_COMPLETED, AI_STATUS_FAILED}:
+                continue
+            await self._refresh_task(db, task, operator)
+            changed = True
+            if task.join_id is not None:
+                updated_join_ids.add(int(task.join_id))
+
+        if not changed:
+            return
+
+        for join_id in updated_join_ids:
+            join = db.get(AiJoin, join_id)
+            if join is None or join.del_flag != '0':
+                continue
+            self._sync_join_status(db, join, operator)
+        db.commit()
+
     async def generate_outfit_img(
         self,
         db: Session,
@@ -693,6 +715,7 @@ class OutfitService(SkeletonService):
             stmt = stmt.where(AiTask.task_status == status)
         total = int(db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery())) or 0)
         rows = list(db.scalars(stmt.offset((page_num - 1) * page_size).limit(page_size)).all())
+        await self._refresh_tasks_if_needed(db, rows, resolve_operator(current_user))
         return mp_page(
             records=[self._serialize_task_page_item(item) for item in rows],
             total=total,
@@ -721,6 +744,7 @@ class OutfitService(SkeletonService):
 
         total = int(db.scalar(select(func.count()).select_from(stmt.order_by(None).subquery())) or 0)
         rows = list(db.scalars(stmt.offset((page_num - 1) * page_size).limit(page_size)).all())
+        await self._refresh_tasks_if_needed(db, rows, resolve_operator(current_user))
 
         return mp_page(
             records=[self._serialize_legacy_task_page_item(item) for item in rows],

@@ -462,3 +462,60 @@ async def test_legacy_task_page_returns_snake_case_records_for_frontend_list(db_
     assert record['completed_at'] == now.strftime('%Y-%m-%d %H:%M:%S')
     assert record['image_url'] == 'https://cdn.test/front.png'
     assert record['error_message'] is None
+
+
+@pytest.mark.asyncio
+async def test_legacy_task_page_refreshes_submitted_tasks(db_session, monkeypatch) -> None:
+    """旧列表接口也要顺手刷新任务状态，避免页面一直停留在 submitted。"""
+    now = datetime.now()
+    db_session.add(
+        AiTask(
+            task_id='task-front',
+            join_id=1,
+            customer_id=42,
+            angle='front',
+            task_status='submitted',
+            image_url=None,
+            size='9:16',
+            create_by='system',
+            create_time=now,
+            update_by='system',
+            update_time=now,
+            del_flag='0',
+        )
+    )
+    db_session.add(
+        AiJoin(
+            join_id=1,
+            customer_id=42,
+            create_by='system',
+            create_time=now,
+            update_by='system',
+            update_time=now,
+            del_flag='0',
+        )
+    )
+    db_session.commit()
+
+    service = OutfitService()
+
+    async def fake_collect_params(request) -> dict[str, object]:  # noqa: ANN001
+        return {'pageNum': 1, 'pageSize': 10}
+
+    async def fake_get_task_status(task_id: str) -> dict[str, object]:
+        return {'data': {'taskId': task_id, 'status': 'completed', 'imageUrl': 'https://cdn.test/front.png'}}
+
+    monkeypatch.setattr('app.services.outfit_service.collect_params', fake_collect_params)
+    monkeypatch.setattr(service.ai_client, 'get_task_status', fake_get_task_status)
+
+    response = await service.legacy_task_page(
+        db=db_session,
+        user_id='42',
+        request=object(),
+        current_user=CurrentUser(user_name='system'),
+    )
+
+    record = response['data']['records'][0]
+    assert record['status'] == 'completed'
+    assert record['progress'] == 100
+    assert record['image_url'] == 'https://cdn.test/front.png'
