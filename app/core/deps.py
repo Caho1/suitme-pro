@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from fastapi import Depends, Header, HTTPException, status
 
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.security import decode_access_token
 
@@ -34,6 +35,17 @@ def _extract_bearer_token(authorization: str | None) -> str:
 
 def get_current_user(authorization: str | None = Header(default=None)) -> CurrentUser:
     """解析当前登录用户。"""
+    settings = get_settings()
+    if not settings.jwt_auth_enabled:
+        # 关闭 JWT 校验时给业务层一个稳定的系统用户，避免审计字段为空。
+        return CurrentUser(
+            user_id=None,
+            user_name="system",
+            roles=["admin"],
+            permissions=["*"],
+            raw_payload={"authDisabled": True},
+        )
+
     token = _extract_bearer_token(authorization)
     payload = decode_access_token(token)
     return CurrentUser(
@@ -49,6 +61,8 @@ def require_permission(permission: str) -> Callable[[CurrentUser], CurrentUser]:
     """创建权限校验依赖。"""
 
     def dependency(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+        if "*" in current_user.permissions:
+            return current_user
         if permission not in current_user.permissions and "admin" not in current_user.roles:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="认证失败")
         return current_user

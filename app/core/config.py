@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str = Field(default="please-change-me", alias="JWT_SECRET_KEY")
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     jwt_expire_minutes: int = Field(default=30, alias="JWT_EXPIRE_MINUTES")
+    jwt_auth_enabled: bool = Field(default=False, alias="JWT_AUTH_ENABLED")
 
     suitme_ai_base_url: str = Field(default="http://127.0.0.1:9001", alias="SUITME_AI_BASE_URL")
     suitme_ai_auth_token: str | None = Field(default=None, alias="SUITME_AI_AUTH_TOKEN")
