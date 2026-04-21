@@ -20,11 +20,11 @@ class TagService(SkeletonService):
     """标签服务。"""
 
     def _base_query(self, current_user: CurrentUser | None = None) -> Any:
-        """构造标签基础查询。"""
-        stmt = select(Tag).where(Tag.del_flag == '0').order_by(Tag.order_value.asc(), Tag.tag_id.asc())
-        if current_user is not None and current_user.user_id is not None:
-            stmt = stmt.where(Tag.user_id == current_user.user_id)
-        return stmt
+        """构造标签基础查询。
+
+        现网 `md_tag` 没有 `user_id`，所以这里只按真实字段查询。
+        """
+        return select(Tag).where(Tag.del_flag == '0').order_by(Tag.order_value.asc(), Tag.tag_id.asc())
 
     def _serialize_tag(self, tag: Tag) -> dict[str, Any]:
         """序列化标签。"""
@@ -56,17 +56,17 @@ class TagService(SkeletonService):
         max_order = db.scalar(select(Tag.order_value).where(Tag.del_flag == '0').order_by(Tag.order_value.desc()).limit(1))
         tag = Tag(
             tag_id=next_numeric_id(db, Tag, Tag.tag_id),
-            user_id=resolve_user_id(current_user, payload),
             name=(payload.get('name') or '').strip() or None,
             type=(payload.get('type') or '').strip() or None,
             order_value=get_int(payload.get('orderValue'), get_int(max_order, 0) + 1),
-            display_flag=get_int(payload.get('displayFlag'), 1),
             create_by=operator,
             create_time=now,
             update_by=operator,
             update_time=now,
             del_flag='0',
         )
+        tag.user_id = resolve_user_id(current_user, payload)
+        tag.display_flag = get_int(payload.get('displayFlag'), 1)
         db.add(tag)
         db.commit()
         return success(data=self._serialize_tag(tag))

@@ -80,6 +80,27 @@ def resolve_user_id(current_user: Any | None, payload: dict[str, Any] | None = N
     return None
 
 
+def resolve_ai_user_id(
+    current_user: Any | None,
+    payload: dict[str, Any] | None = None,
+    fallback_id: Any = None,
+    *keys: str,
+) -> str | None:
+    """解析发给 AI 服务的 userId，并统一转成字符串。"""
+    if current_user is not None and getattr(current_user, 'user_id', None) not in (None, ''):
+        return str(current_user.user_id)
+
+    payload = payload or {}
+    for key in keys or ('userId', 'user_id'):
+        value = payload.get(key)
+        if value not in (None, ''):
+            return str(value)
+
+    if fallback_id not in (None, ''):
+        return str(fallback_id)
+    return None
+
+
 def resolve_operator(current_user: Any | None, default: str = 'system') -> str:
     """返回审计字段中的操作人。"""
     if current_user is not None and getattr(current_user, 'user_name', None):

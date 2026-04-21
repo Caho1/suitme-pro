@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
+import httpx
 from fastapi import Request
 from app.core.sqlalchemy_compat import Session, func, select
 
@@ -14,7 +15,16 @@ from app.core.response import error, mp_page, success, to_ajax
 from app.models.customer import Customer
 from app.services.ai_client import AiClient
 from app.services.base import SkeletonService
-from app.services.biz_support import AI_STATUS_COMPLETED, build_mp_page_payload, extract_ai_submission, json_loads_if_possible, next_numeric_id, resolve_operator, resolve_user_id
+from app.services.biz_support import (
+    AI_STATUS_COMPLETED,
+    AI_STATUS_FAILED,
+    build_mp_page_payload,
+    extract_ai_submission,
+    json_loads_if_possible,
+    next_numeric_id,
+    resolve_ai_user_id,
+    resolve_operator,
+)
 
 
 class CustomerService(SkeletonService):
@@ -80,7 +90,7 @@ class CustomerService(SkeletonService):
         db.flush()
 
         ai_payload = {
-            'userId': resolve_user_id(current_user, payload),
+            'userId': resolve_ai_user_id(current_user, payload, customer.customer_id),
             'pictureUrl': customer.picture_url,
             'bodyProfile': payload.get('bodyProfile') or payload.get('bodyProfileJson'),
             'size': payload.get('size'),
@@ -141,17 +151,24 @@ class CustomerService(SkeletonService):
         if customer.digital_img_url:
             task_status = AI_STATUS_COMPLETED
         elif customer.digital_task_id:
-            response = await self.ai_client.get_task_status(customer.digital_task_id)
-            submission = extract_ai_submission(response)
-            task_status = submission['status']
-            if submission['image_url']:
-                customer.digital_img_url = submission['image_url']
-                customer.update_by = resolve_operator(current_user)
-                customer.update_time = datetime.now()
-                db.commit()
+            try:
+                response = await self.ai_client.get_task_status(customer.digital_task_id)
+                submission = extract_ai_submission(response)
+                task_status = submission['status']
+                if submission['image_url']:
+                    customer.digital_img_url = submission['image_url']
+                    customer.update_by = resolve_operator(current_user)
+                    customer.update_time = datetime.now()
+                    db.commit()
+            except httpx.HTTPStatusError as exc:
+                if exc.response is None or exc.response.status_code != 404:
+                    raise
+                task_status = AI_STATUS_FAILED
         payload = self._serialize_customer(customer)
         if task_status:
             payload['taskStatus'] = task_status
+        if task_status == AI_STATUS_FAILED and customer.digital_task_id:
+            payload['taskErrorMsg'] = '远端数字形象任务不存在或已失效'
         return success(data=payload)
 
     async def page(

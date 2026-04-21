@@ -4,6 +4,7 @@ from sqlalchemy import inspect
 
 from app.models.matching import Matching, MatchingSku, MatchingTag
 from app.models.product import Product, ProductColor
+from app.models.tag import Tag
 from app.services.matching_service import MatchingService
 
 
@@ -38,6 +39,15 @@ def test_matching_tag_model_does_not_map_user_id() -> None:
 
     assert 'user_id' not in column_names
     assert _mapped_column_name(MatchingTag, 'matching_tag_id') == 'matching_tag_id'
+
+
+def test_tag_model_uses_production_columns() -> None:
+    """场景/风格标签模型不能再映射线上不存在的旧字段。"""
+    column_names = {column.name for column in Tag.__table__.columns}
+
+    assert 'user_id' not in column_names
+    assert 'display_flag' not in column_names
+    assert _mapped_column_name(Tag, 'tag_id') == 'tag_id'
 
 
 def test_extract_sku_list_keeps_product_id_when_present() -> None:
